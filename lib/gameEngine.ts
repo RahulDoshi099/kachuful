@@ -29,9 +29,9 @@ export function shuffle<T>(arr: T[]): T[] {
 }
 
 export function getInitialHandSize(playerCount: number): number {
-  if (playerCount <= 5) return 10;
-  if (playerCount === 6) return 8;
-  return 7;
+  // Max cards per player = floor(52 / playerCount), capped at 10
+  const maxPossible = Math.floor(52 / playerCount);
+  return Math.min(maxPossible, 10);
 }
 
 export function buildHandSizes(initial: number): number[] {

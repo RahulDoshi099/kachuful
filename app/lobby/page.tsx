@@ -168,21 +168,31 @@ export default function LobbyPage() {
               <label className="text-xs text-green-400 uppercase tracking-wider mb-2 block">
                 Number of Players
               </label>
-              <div className="flex gap-2">
-                {[2, 3, 4, 5, 6, 7].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setMaxPlayers(n)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
-                      maxPlayers === n 
-                        ? 'bg-yellow-500 text-black' 
-                        : 'bg-green-700 hover:bg-green-600 text-white'
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMaxPlayers((p) => Math.max(2, p - 1))}
+                  className="w-10 h-10 rounded-lg bg-green-700 hover:bg-green-600 text-white font-bold text-xl transition-colors"
+                >
+                  −
+                </button>
+                <span className="flex-1 text-center text-3xl font-bold text-yellow-400">
+                  {maxPlayers}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMaxPlayers((p) => Math.min(15, p + 1))}
+                  className="w-10 h-10 rounded-lg bg-green-700 hover:bg-green-600 text-white font-bold text-xl transition-colors"
+                >
+                  +
+                </button>
+              </div>
+              <div className="mt-2 flex justify-between text-xs text-green-400">
+                <span>Min: 2</span>
+                <span className="text-yellow-400 font-semibold">
+                  {Math.min(Math.floor(52 / maxPlayers), 10)} cards/player · {Math.min(Math.floor(52 / maxPlayers), 10) * 2 - 1} hands total
+                </span>
+                <span>Max: 15</span>
               </div>
             </div>
 

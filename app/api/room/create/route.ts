@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const room = createRoom(
       hostId, 
       hostName, 
-      Math.min(Math.max(Number(maxPlayers), 2), 7),
+      Math.min(Math.max(Number(maxPlayers), 2), 15),
       turnTimer ? Number(turnTimer) : 10
     );
     console.log('Room created successfully:', { code: room.code, hostId, hostName, turnTimer: room.turnTimer });
