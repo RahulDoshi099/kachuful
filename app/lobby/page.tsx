@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 function getOrCreatePlayerId(): string {
@@ -107,10 +107,10 @@ export default function LobbyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-green-900 flex items-center justify-center text-white p-4">
-      <div className="bg-green-800 rounded-2xl p-8 w-full max-w-md shadow-2xl">
-        <h1 className="text-3xl font-bold text-center mb-2">🃏 Kachuful</h1>
-        <p className="text-green-300 text-center text-sm mb-6">Trick-taking card game</p>
+    <div className="min-h-screen bg-green-900 flex items-center justify-center text-white p-3 sm:p-4">
+      <div className="bg-green-800 rounded-2xl p-4 sm:p-8 w-full max-w-md shadow-2xl">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">🃏 Kachuful</h1>
+        <p className="text-green-300 text-center text-sm mb-5 sm:mb-6">Trick-taking card game</p>
 
         {/* Player name */}
         <div className="mb-6">
@@ -125,7 +125,7 @@ export default function LobbyPage() {
             placeholder="Enter your name"
             maxLength={30}
           />
-          <p className="text-xs text-green-500 mt-1">
+          <p className="text-xs text-green-500 mt-1 leading-relaxed">
             Choose a unique name (case-insensitive)
           </p>
         </div>
@@ -187,12 +187,12 @@ export default function LobbyPage() {
                   +
                 </button>
               </div>
-              <div className="mt-2 flex justify-between text-xs text-green-400">
-                <span>Min: 2</span>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-green-400">
+                <span className="shrink-0">Min: 2</span>
                 <span className="text-yellow-400 font-semibold">
                   {Math.min(Math.floor(52 / maxPlayers), 10)} cards/player · {Math.min(Math.floor(52 / maxPlayers), 10) * 2 - 1} hands total
                 </span>
-                <span>Max: 15</span>
+                <span className="shrink-0">Max: 15</span>
               </div>
             </div>
 
@@ -200,7 +200,7 @@ export default function LobbyPage() {
               <label className="text-xs text-green-400 uppercase tracking-wider mb-2 block">
                 Turn Timer (seconds)
               </label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {[10, 15, 20, 30, 35, 40, 45, 50, 60].map((sec) => (
                   <button
                     key={sec}

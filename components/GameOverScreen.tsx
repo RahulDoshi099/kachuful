@@ -12,13 +12,13 @@ export default function GameOverScreen({ players, onReset }: Props) {
   const winner = sorted[0];
 
   return (
-    <div className="min-h-screen bg-green-900 flex items-center justify-center text-white">
-      <div className="bg-green-800 rounded-2xl p-8 text-center max-w-md w-full shadow-2xl">
-        <div className="text-5xl mb-4">🏆</div>
-        <h1 className="text-3xl font-bold mb-1">Game Over!</h1>
-        <p className="text-green-300 mb-6">{winner.name} wins with {winner.score} points!</p>
+    <div className="min-h-screen bg-green-900 flex items-center justify-center text-white p-3 sm:p-4">
+      <div className="bg-green-800 rounded-2xl p-5 sm:p-8 text-center max-w-md w-full shadow-2xl">
+        <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">🏆</div>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Game Over!</h1>
+        <p className="text-green-300 mb-5 sm:mb-6 text-sm sm:text-base">{winner.name} wins with {winner.score} points!</p>
 
-        <div className="flex flex-col gap-2 mb-8">
+        <div className="flex flex-col gap-2 mb-6 sm:mb-8">
           {sorted.map((p, i) => (
             <div
               key={p.id}
@@ -26,15 +26,15 @@ export default function GameOverScreen({ players, onReset }: Props) {
                 i === 0 ? 'bg-yellow-600 text-black font-bold' : 'bg-green-700'
               }`}
             >
-              <span>{i + 1}. {p.name}</span>
-              <span>{p.score} pts</span>
+              <span className="truncate pr-2">{i + 1}. {p.name}</span>
+              <span className="shrink-0">{p.score} pts</span>
             </div>
           ))}
         </div>
 
         <button
           onClick={onReset}
-          className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-8 py-3 rounded-xl text-lg transition-colors"
+          className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 sm:px-8 py-3 rounded-xl text-base sm:text-lg transition-colors w-full sm:w-auto"
         >
           Play Again
         </button>

@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback, useReducer, use, useRef } from 'react';
+import { useEffect, useState, useCallback, useReducer, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { GameState, Card } from '@/lib/types';
 import { Room } from '@/lib/roomStore';
 import {
-  placeBid, playCard, advanceRound, advanceTrick,
-  getValidBids, getValidCards, aiPlayCard,
+  placeBid, playCard, advanceRound,
+  getValidBids, getValidCards,
 } from '@/lib/gameEngine';
 import ScoreBoard from '@/components/ScoreBoard';
 import TrickArea from '@/components/TrickArea';
@@ -43,14 +43,12 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const [gameState, dispatch] = useReducer(reducer, null as unknown as GameState);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const autoActedRef = useRef<string>('');
   const playerId = typeof window !== 'undefined' ? getPlayerId() : '';
 
   const fetchRoom = useCallback(async () => {
     try {
-      const res = await fetch(`/api/room/${code}`);
+      const query = playerId ? `?playerId=${encodeURIComponent(playerId)}` : '';
+      const res = await fetch(`/api/room/${code}${query}`);
       if (!res.ok) { setError('Room not found'); return; }
       const data = await res.json();
       setRoom(data.room);
@@ -60,27 +58,32 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     } catch {
       setError('Connection error');
     }
-  }, [code]);
+  }, [code, playerId]);
 
   useEffect(() => {
-    fetchRoom();
+    const boot = setTimeout(() => {
+      void fetchRoom();
+    }, 0);
     const interval = setInterval(fetchRoom, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(boot);
+      clearInterval(interval);
+    };
   }, [fetchRoom]);
 
   const pushState = useCallback(async (state: GameState) => {
     await fetch(`/api/room/${code}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', gameState: state }),
+      body: JSON.stringify({ action: 'update', gameState: state, playerId }),
     });
-  }, [code]);
+  }, [code, playerId]);
 
   async function handleStart() {
     const res = await fetch(`/api/room/${code}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'start' }),
+      body: JSON.stringify({ action: 'start', playerId }),
     });
     const data = await res.json();
     if (!res.ok) { setError(data.error); return; }
@@ -109,70 +112,6 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
     await pushState(next);
   }
 
-  // Auto-advance after trick reveal (3 second pause so players can see the winner)
-  useEffect(() => {
-    if (!gameState || gameState.phase !== 'trickReveal') return;
-    const timer = setTimeout(async () => {
-      const next = advanceTrick(gameState);
-      dispatch({ type: 'SET', state: next });
-      await pushState(next);
-    }, 3000);
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState?.phase, gameState?.completedTricks?.length]);
-
-  // Auto-play countdown
-  useEffect(() => {
-    if (!gameState || !playerId || !room) return;
-
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    const isMyTurn = currentPlayer?.id === playerId;
-    // Only enable timer during PLAYING phase, not bidding
-    const isPlayingPhase = gameState.phase === 'playing';    const turnKey = `${gameState.phase}-${gameState.currentPlayerIndex}-${gameState.biddingIndex}-${gameState.completedTricks.length}`;
-
-    if (!isMyTurn || !isPlayingPhase) {
-      if (countdownRef.current) clearInterval(countdownRef.current);
-      setCountdown(null);
-      return;
-    }
-
-    if (autoActedRef.current === turnKey) return;
-    autoActedRef.current = turnKey;
-
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    const timerSeconds = room.turnTimer || 10;
-    setCountdown(timerSeconds);
-
-    let remaining = timerSeconds;
-    countdownRef.current = setInterval(async () => {
-      remaining -= 1;
-      setCountdown(remaining);
-
-      if (remaining <= 0) {
-        clearInterval(countdownRef.current!);
-        setCountdown(null);
-
-        // Auto-play card
-        if (gameState.phase === 'playing') {
-          const autoCard = aiPlayCard(gameState, playerId);
-          const next = playCard(gameState, playerId, autoCard);
-          dispatch({ type: 'SET', state: next });
-          await pushState(next);
-        }
-      }
-    }, 1000);
-
-    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    gameState?.phase,
-    gameState?.currentPlayerIndex,
-    gameState?.biddingIndex,
-    gameState?.completedTricks?.length,
-    playerId,
-    room?.turnTimer,
-  ]);
-
   function copyCode() {
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(code);
@@ -190,8 +129,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   if (error) {
     return (
-      <div className="min-h-screen bg-green-900 flex items-center justify-center text-white">
-        <div className="text-center">
+      <div className="min-h-screen bg-green-900 flex items-center justify-center text-white p-4">
+        <div className="text-center max-w-sm w-full">
           <p className="text-red-400 text-lg mb-4">{error}</p>
           <button onClick={() => router.push('/lobby')} className="bg-yellow-500 text-black font-bold px-6 py-2 rounded-xl">
             Back to Lobby
@@ -203,7 +142,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   if (!room) {
     return (
-      <div className="min-h-screen bg-green-900 flex items-center justify-center text-white">
+      <div className="min-h-screen bg-green-900 flex items-center justify-center text-white p-4">
         <div className="animate-pulse text-green-400">Loading room...</div>
       </div>
     );
@@ -216,15 +155,15 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
   if (!room.gameState) {
     return (
-      <div className="min-h-screen bg-green-900 flex items-center justify-center text-white p-4">
-        <div className="bg-green-800 rounded-2xl p-8 w-full max-w-md shadow-2xl text-center">
-          <h1 className="text-2xl font-bold mb-1">Room Lobby</h1>
+      <div className="min-h-screen bg-green-900 flex items-center justify-center text-white p-3 sm:p-4">
+        <div className="bg-green-800 rounded-2xl p-5 sm:p-8 w-full max-w-md shadow-2xl text-center">
+          <h1 className="text-xl sm:text-2xl font-bold mb-1">Room Lobby</h1>
           <p className="text-green-400 text-sm mb-6">Waiting for players...</p>
 
           <div className="bg-green-900 rounded-xl p-4 mb-6">
             <p className="text-xs text-green-400 uppercase tracking-wider mb-2">Room Code</p>
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-4xl font-mono font-bold tracking-widest text-yellow-400">{code}</span>
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+              <span className="text-3xl sm:text-4xl font-mono font-bold tracking-widest text-yellow-400">{code}</span>
               <button onClick={copyCode} className="text-sm bg-green-700 hover:bg-green-600 px-3 py-1 rounded-lg transition-colors">
                 {copied ? '✓ Copied' : 'Copy'}
               </button>
@@ -237,9 +176,9 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             </p>
             <div className="flex flex-col gap-2">
               {room.players.map((p) => (
-                <div key={p.id} className="flex items-center justify-between bg-green-700 rounded-lg px-3 py-2">
-                  <span className="font-mono text-sm">{p.name}</span>
-                  <div className="flex items-center gap-2">
+                <div key={p.id} className="flex items-center justify-between gap-2 bg-green-700 rounded-lg px-3 py-2">
+                  <span className="font-mono text-sm truncate">{p.name}</span>
+                  <div className="flex items-center gap-2 shrink-0">
                     {p.id === room.hostId && <span className="text-xs bg-yellow-600 text-black px-2 py-0.5 rounded-full">Host</span>}
                     {p.id === playerId && <span className="text-xs text-green-400">You</span>}
                   </div>
@@ -281,16 +220,24 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const validCardIds = new Set(validCards.map((c) => c.id));
   const tricksPlayed = gameState.completedTricks.length;
   const totalTricks = gameState.currentHandSize;
-  const countdownColor = countdown !== null
-    ? countdown <= 3 ? 'text-red-400' : countdown <= 6 ? 'text-yellow-400' : 'text-green-300'
-    : '';
+  const countdown = room.turnSecondsLeft ?? null;
+  const totalTurnSeconds = Math.max(room.turnTimer ?? 10, 1);
+  const remainingSeconds = Math.max(countdown ?? 0, 0);
+  const percent = Math.min(100, Math.max(0, (remainingSeconds / totalTurnSeconds) * 100));
+  const timerStroke = remainingSeconds <= 3 ? '#ef4444' : remainingSeconds <= 6 ? '#facc15' : '#4ade80';
+  const ringSize = 52;
+  const strokeWidth = 6;
+  const radius = (ringSize - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference * (1 - percent / 100);
+  const showCenterTimer = (gameState.phase === 'playing' || gameState.phase === 'bidding') && countdown !== null;
 
   return (
     <div className="min-h-screen bg-green-900 text-white flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 bg-green-950 shadow">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold">Kachuful</h1>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 px-3 sm:px-4 lg:px-6 py-3 bg-green-950 shadow">
+        <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+          <h1 className="text-lg sm:text-xl font-bold">Kachuful</h1>
           <button onClick={copyCode} className="text-xs bg-green-800 hover:bg-green-700 px-2 py-1 rounded font-mono">
             {copied ? '✓' : code}
           </button>
@@ -298,11 +245,11 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             🔄 Refresh
           </button>
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          <span className="bg-green-800 px-3 py-1 rounded-full">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+          <span className="bg-green-800 px-2.5 sm:px-3 py-1 rounded-full">
             Hand {gameState.currentHandIndex + 1}/{gameState.handSizes.length} — {gameState.currentHandSize} cards
           </span>
-          <span className="bg-yellow-700 px-3 py-1 rounded-full capitalize flex items-center gap-1">
+          <span className="bg-yellow-700 px-2.5 sm:px-3 py-1 rounded-full capitalize flex items-center gap-1">
             Trump:{' '}
             {gameState.trumpSuit === 'spades' && '♠'}
             {gameState.trumpSuit === 'hearts' && '♥'}
@@ -313,8 +260,50 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         </div>
       </div>
 
-      <div className="flex flex-1 gap-4 p-4">
-        <div className="flex-1 flex flex-col gap-4">
+      <div className="flex flex-1 flex-col lg:flex-row gap-3 sm:gap-4 p-3 sm:p-4">
+        <div className="order-2 lg:order-1 flex-1 flex flex-col gap-3 sm:gap-4">
+          {showCenterTimer && currentPlayer && (
+            <div className="flex items-center justify-center">
+              <div className="flex items-center gap-2 sm:gap-3 rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 bg-green-950/80 border border-green-600/60 shadow max-w-full">
+                <div className="text-center leading-tight">
+                  <p className="text-[11px] uppercase tracking-wider text-green-400">Current Turn</p>
+                  <p className="font-semibold text-white max-w-[150px] sm:max-w-[200px] truncate">{currentPlayer.name}</p>
+                </div>
+                <div className="relative" style={{ width: ringSize, height: ringSize }}>
+                  <svg width={ringSize} height={ringSize} className="-rotate-90">
+                    <circle
+                      cx={ringSize / 2}
+                      cy={ringSize / 2}
+                      r={radius}
+                      stroke="rgba(255,255,255,0.2)"
+                      strokeWidth={strokeWidth}
+                      fill="transparent"
+                    />
+                    <circle
+                      cx={ringSize / 2}
+                      cy={ringSize / 2}
+                      r={radius}
+                      stroke={timerStroke}
+                      strokeWidth={strokeWidth}
+                      strokeLinecap="round"
+                      fill="transparent"
+                      style={{
+                        strokeDasharray: circumference,
+                        strokeDashoffset: dashOffset,
+                        transition: 'stroke-dashoffset 1s linear',
+                      }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="font-mono font-bold text-sm bg-gray-700/75 text-white px-2 py-0.5 rounded-md">
+                      {remainingSeconds}s
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <TrickArea
             trick={gameState.currentTrick}
             players={gameState.players}
@@ -333,7 +322,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
           {gameState.phase === 'bidding' && !isMyTurn && (
             <div className="text-center py-4">
-              <div className="text-green-300 animate-pulse text-lg mb-2">
+              <div className="text-green-300 animate-pulse text-base sm:text-lg mb-2">
                 {currentPlayer?.name} is bidding...
               </div>
               <p className="text-xs text-green-500 mb-2">
@@ -341,7 +330,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
               </p>
               <div className="text-xs text-green-600 mt-4">
                 <p>Bidding Progress: {gameState.biddingIndex + 1} / {gameState.players.length}</p>
-                <div className="flex justify-center gap-2 mt-2">
+                <div className="flex justify-center flex-wrap gap-2 mt-2">
                   {gameState.players.map((p) => (
                     <div key={p.id} className={`px-2 py-1 rounded text-xs ${p.bid !== null ? 'bg-green-700' : 'bg-green-900'}`}>
                       {p.name}: {p.bid !== null ? p.bid : '?'}
@@ -354,7 +343,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
           {gameState.phase === 'playing' && !isMyTurn && (
             <div className="text-center py-4">
-              <div className="text-green-300 animate-pulse text-lg mb-2">
+              <div className="text-green-300 animate-pulse text-base sm:text-lg mb-2">
                 {currentPlayer?.name}&apos;s turn to play...
               </div>
               <p className="text-xs text-green-500">
@@ -365,19 +354,20 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         </div>
 
         {/* Scoreboard on the right */}
-        <div className="w-48 shrink-0">
+        <div className="order-1 lg:order-2 w-full lg:w-52 shrink-0">
           <ScoreBoard
             players={gameState.players}
             dealerIndex={gameState.dealerIndex}
             currentPlayerIndex={gameState.currentPlayerIndex}
             phase={gameState.phase}
+            connectedById={Object.fromEntries(room.players.map((p) => [p.id, p.connected]))}
           />
         </div>
       </div>
 
       {/* Bidding panel + hand at bottom */}
       {myPlayer && (
-        <div className="bg-green-950 px-4 pt-3 pb-4 flex flex-col items-center gap-3">
+        <div className="bg-green-950 px-3 sm:px-4 pt-3 pb-4 flex flex-col items-center gap-3">
           {gameState.phase === 'bidding' && isMyTurn && (
             <div className="w-full max-w-lg">
               <div className="text-center mb-2">
@@ -390,13 +380,6 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
                 handSize={gameState.currentHandSize}
                 onBid={handleBid}
               />
-            </div>
-          )}
-
-          {gameState.phase === 'playing' && isMyTurn && countdown !== null && (
-            <div className="flex items-center gap-2">
-              <span className="text-yellow-400 font-bold text-sm">⚡ Your turn to play!</span>
-              <span className={`font-mono font-bold text-lg ${countdownColor}`}>{countdown}s</span>
             </div>
           )}
 

@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function CardBack({ onClick, highlight, small }: Props) {
-  const size = small ? 'w-12 h-16' : 'w-16 h-24';
+  const size = small ? 'w-12 h-16' : 'w-14 h-20 sm:w-16 sm:h-24';
 
   return (
     <button

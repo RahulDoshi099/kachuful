@@ -76,7 +76,6 @@ export function placeBid(state: GameState, playerId: string, bid: number): GameS
   const dealerId = state.players[state.dealerIndex].id;
   const isDealer = playerId === dealerId;
   const totalBidsSoFar = state.players.reduce((sum, p) => sum + (p.bid ?? 0), 0);
-  const remainingBidders = state.biddingOrder.length - state.biddingIndex - 1;
 
   // Dealer hook: cannot make total bids equal tricks available
   if (isDealer) {
@@ -268,7 +267,6 @@ export function aiPlayCard(state: GameState, playerId: string): Card {
   const valid = getValidCards(state, playerId);
   const player = state.players.find((p) => p.id === playerId)!;
   const needed = (player.bid ?? 0) - player.tricksTaken;
-  const leadSuit = state.currentTrick.leadSuit;
 
   if (needed <= 0) {
     // Try to lose — play lowest card

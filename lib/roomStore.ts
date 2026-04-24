@@ -1,11 +1,12 @@
 // Server-side in-memory room store (lives in Node.js process)
 import { GameState } from './types';
-import { createInitialState } from './gameEngine';
+import { advanceTrick, aiBid, aiPlayCard, createInitialState, placeBid, playCard } from './gameEngine';
 
 export interface RoomPlayer {
   id: string;
   name: string;
   connected: boolean;
+  lastSeenAt: number;
 }
 
 export interface Room {
@@ -16,6 +17,111 @@ export interface Room {
   players: RoomPlayer[];
   gameState: GameState | null;
   createdAt: number;
+  turnKey: string | null;
+  turnStartedAt: number | null;
+  turnSecondsLeft: number;
+  revealStartedAt: number | null;
+}
+
+const INACTIVITY_TIMEOUT_MS = 12000;
+const TRICK_REVEAL_MS = 3000;
+const MAX_AUTOPLAY_STEPS_PER_TICK = 32;
+
+function getTurnKey(state: GameState): string | null {
+  if (state.phase !== 'bidding' && state.phase !== 'playing') return null;
+  return [
+    state.phase,
+    state.currentHandIndex,
+    state.currentPlayerIndex,
+    state.biddingIndex,
+    state.completedTricks.length,
+    state.currentTrick.cards.length,
+  ].join(':');
+}
+
+function getConnectedRoomPlayer(room: Room, playerId: string): RoomPlayer | undefined {
+  return room.players.find((p) => p.id === playerId);
+}
+
+function refreshConnections(room: Room, now: number): void {
+  for (const player of room.players) {
+    player.connected = now - player.lastSeenAt <= INACTIVITY_TIMEOUT_MS;
+  }
+}
+
+function resetTurnClock(room: Room): void {
+  room.turnKey = null;
+  room.turnStartedAt = null;
+  room.turnSecondsLeft = 0;
+}
+
+function ensureTurnClock(room: Room, state: GameState, now: number): void {
+  const key = getTurnKey(state);
+  if (!key) {
+    resetTurnClock(room);
+    return;
+  }
+
+  if (room.turnKey !== key || room.turnStartedAt === null) {
+    room.turnKey = key;
+    room.turnStartedAt = now;
+  }
+
+  const elapsedSeconds = Math.floor((now - room.turnStartedAt) / 1000);
+  room.turnSecondsLeft = Math.max(room.turnTimer - elapsedSeconds, 0);
+}
+
+function tickRoom(room: Room): void {
+  if (!room.gameState) {
+    resetTurnClock(room);
+    room.revealStartedAt = null;
+    return;
+  }
+
+  let state = room.gameState;
+
+  for (let i = 0; i < MAX_AUTOPLAY_STEPS_PER_TICK; i++) {
+    const now = Date.now();
+    refreshConnections(room, now);
+
+    if (state.phase === 'trickReveal') {
+      if (room.revealStartedAt === null) room.revealStartedAt = now;
+      if (now - room.revealStartedAt >= TRICK_REVEAL_MS) {
+        state = advanceTrick(state);
+        room.gameState = state;
+        room.revealStartedAt = null;
+        resetTurnClock(room);
+        continue;
+      }
+      room.turnSecondsLeft = 0;
+      break;
+    }
+
+    room.revealStartedAt = null;
+    ensureTurnClock(room, state, now);
+
+    if (state.phase !== 'bidding' && state.phase !== 'playing') {
+      break;
+    }
+
+    const currentPlayer = state.players[state.currentPlayerIndex];
+    const roomPlayer = getConnectedRoomPlayer(room, currentPlayer.id);
+    const isDisconnected = roomPlayer ? !roomPlayer.connected : true;
+    const shouldAutoAct = isDisconnected || room.turnSecondsLeft <= 0;
+
+    if (!shouldAutoAct) break;
+
+    if (state.phase === 'bidding') {
+      const bid = aiBid(state, currentPlayer.id);
+      state = placeBid(state, currentPlayer.id, bid);
+    } else {
+      const card = aiPlayCard(state, currentPlayer.id);
+      state = playCard(state, currentPlayer.id, card);
+    }
+
+    room.gameState = state;
+    resetTurnClock(room);
+  }
 }
 
 // Global store — persists across requests in dev (single process)
@@ -40,21 +146,41 @@ function generateCode(): string {
 export function createRoom(hostId: string, hostName: string, maxPlayers: number, turnTimer: number = 10): Room {
   let code = generateCode();
   while (rooms.has(code)) code = generateCode();
+  const now = Date.now();
   const room: Room = {
     code,
     hostId,
     maxPlayers,
     turnTimer,
-    players: [{ id: hostId, name: hostName, connected: true }],
+    players: [{ id: hostId, name: hostName, connected: true, lastSeenAt: now }],
     gameState: null,
-    createdAt: Date.now(),
+    createdAt: now,
+    turnKey: null,
+    turnStartedAt: null,
+    turnSecondsLeft: 0,
+    revealStartedAt: null,
   };
   rooms.set(code, room);
   return room;
 }
 
 export function getRoom(code: string): Room | undefined {
-  return rooms.get(code.toUpperCase());
+  const room = rooms.get(code.toUpperCase());
+  if (!room) return undefined;
+  tickRoom(room);
+  return room;
+}
+
+export function touchPlayer(code: string, playerId: string): Room | undefined {
+  const room = rooms.get(code.toUpperCase());
+  if (!room) return undefined;
+  const player = room.players.find((p) => p.id === playerId);
+  if (player) {
+    player.lastSeenAt = Date.now();
+    player.connected = true;
+  }
+  tickRoom(room);
+  return room;
 }
 
 export function joinRoom(code: string, playerId: string, playerName: string): { room: Room | null; error?: string } {
@@ -65,6 +191,7 @@ export function joinRoom(code: string, playerId: string, playerName: string): { 
   const existing = room.players.find((p) => p.id === playerId);
   if (existing) {
     existing.connected = true;
+    existing.lastSeenAt = Date.now();
     return { room };
   }
   
@@ -80,7 +207,7 @@ export function joinRoom(code: string, playerId: string, playerName: string): { 
     return { room: null, error: 'Name already taken in this room' };
   }
   
-  room.players.push({ id: playerId, name: playerName, connected: true });
+  room.players.push({ id: playerId, name: playerName, connected: true, lastSeenAt: Date.now() });
   return { room };
 }
 
@@ -92,12 +219,20 @@ export function startGame(code: string): Room | null {
     room.players.map(() => 'human' as const),
     room.players.map((p) => p.id)   // pass real player IDs
   );
+  room.revealStartedAt = null;
+  resetTurnClock(room);
+  tickRoom(room);
   return room;
 }
 
 export function updateGameState(code: string, state: GameState): void {
   const room = rooms.get(code.toUpperCase());
-  if (room) room.gameState = state;
+  if (room) {
+    room.gameState = state;
+    room.revealStartedAt = state.phase === 'trickReveal' ? room.revealStartedAt ?? Date.now() : null;
+    resetTurnClock(room);
+    tickRoom(room);
+  }
 }
 
 export function listRooms(): Room[] {

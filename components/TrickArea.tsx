@@ -13,7 +13,8 @@ interface Props {
 }
 
 export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, totalTricks }: Props) {
-  const [revealCountdown, setRevealCountdown] = useState<number | null>(null);
+  const [clockMs, setClockMs] = useState(() => Date.now());
+  const [revealStartedAt, setRevealStartedAt] = useState<number | null>(null);
 
   const trickComplete = trick.cards.length === players.length && trick.winnerId !== null;
   const winningCardId = trick.winnerId
@@ -23,21 +24,36 @@ export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, tot
 
   // Countdown while trick is being revealed
   useEffect(() => {
-    if (!trickComplete) { setRevealCountdown(null); return; }
-    setRevealCountdown(3);
+    if (!trickComplete) {
+      const resetTimer = setTimeout(() => {
+        setRevealStartedAt(null);
+      }, 0);
+      return () => clearTimeout(resetTimer);
+    }
+
+    const startedAt = Date.now();
+    const initTimer = setTimeout(() => {
+      setRevealStartedAt(startedAt);
+      setClockMs(startedAt);
+    }, 0);
     const interval = setInterval(() => {
-      setRevealCountdown((prev) => {
-        if (prev === null || prev <= 1) { clearInterval(interval); return null; }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
+      setClockMs(Date.now());
+    }, 250);
+
+    return () => {
+      clearTimeout(initTimer);
+      clearInterval(interval);
+    };
   }, [trickComplete, trick.winnerId]);
 
+  const revealCountdown = trickComplete && revealStartedAt !== null
+    ? Math.max(0, 3 - Math.floor((clockMs - revealStartedAt) / 1000))
+    : null;
+
   return (
-    <div className="bg-green-800 rounded-xl p-4 min-h-40 flex flex-col gap-3 relative overflow-visible">
+    <div className="bg-green-800 rounded-xl p-3 sm:p-4 min-h-40 flex flex-col gap-3 relative overflow-visible">
       {/* Header row */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-xs text-green-400 font-semibold uppercase tracking-wider">
           Current Trick {trick.leadSuit ? `— Lead: ${trick.leadSuit}` : ''}
         </div>
@@ -51,7 +67,7 @@ export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, tot
       </div>
 
       {/* Cards */}
-      <div className="flex gap-6 flex-wrap items-end justify-center flex-1 pb-2">
+      <div className="flex gap-3 sm:gap-6 flex-wrap items-end justify-center flex-1 pb-2">
         {trick.cards.length === 0 && (
           <span className="text-green-600 italic text-sm self-center">No cards played yet</span>
         )}
@@ -99,11 +115,11 @@ export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, tot
 
       {/* Winner banner + countdown */}
       {trickComplete && winnerName && (
-        <div className="flex items-center justify-center gap-3 mt-1">
-          <div className="bg-yellow-400 text-black font-bold px-5 py-1.5 rounded-full text-sm shadow-lg">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-1">
+          <div className="bg-yellow-400 text-black font-bold px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm shadow-lg text-center">
             🏆 {winnerName} wins this trick!
           </div>
-          {revealCountdown !== null && (
+          {revealCountdown !== null && revealCountdown > 0 && (
             <span className="text-green-400 text-xs font-mono">next in {revealCountdown}s</span>
           )}
         </div>

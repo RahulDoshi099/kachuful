@@ -13,7 +13,7 @@ interface Props {
 export default function PlayerHand({ player, validCardIds, onPlayCard, isActive }: Props) {
   return (
     <div>
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
         <span className="text-sm font-semibold text-green-300">Your Hand</span>
         {player.bid !== null && (
           <span className="text-xs bg-green-800 px-2 py-0.5 rounded-full">

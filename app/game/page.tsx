@@ -98,13 +98,13 @@ export default function GamePage() {
   return (
     <div className="min-h-screen bg-green-900 text-white flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 bg-green-950 shadow">
-        <h1 className="text-xl font-bold tracking-wide">Kachuful</h1>
-        <div className="flex items-center gap-4 text-sm">
-          <span className="bg-green-800 px-3 py-1 rounded-full">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 px-3 sm:px-4 lg:px-6 py-3 bg-green-950 shadow">
+        <h1 className="text-lg sm:text-xl font-bold tracking-wide">Kachuful</h1>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+          <span className="bg-green-800 px-2.5 sm:px-3 py-1 rounded-full">
             Hand {state.currentHandIndex + 1}/{state.handSizes.length} — {state.currentHandSize} cards
           </span>
-          <span className="bg-yellow-700 px-3 py-1 rounded-full capitalize flex items-center gap-1">
+          <span className="bg-yellow-700 px-2.5 sm:px-3 py-1 rounded-full capitalize flex items-center gap-1">
             Trump: {state.trumpSuit === 'spades' && '♠'}
             {state.trumpSuit === 'hearts' && '♥'}
             {state.trumpSuit === 'diamonds' && '♦'}
@@ -114,15 +114,15 @@ export default function GamePage() {
         </div>
         <button
           onClick={() => dispatch({ type: 'RESET' })}
-          className="text-xs bg-red-700 hover:bg-red-600 px-3 py-1 rounded"
+          className="text-xs bg-red-700 hover:bg-red-600 px-3 py-1 rounded self-start lg:self-auto"
         >
           New Game
         </button>
       </div>
 
-      <div className="flex flex-1 gap-4 p-4">
+      <div className="flex flex-1 flex-col lg:flex-row gap-3 sm:gap-4 p-3 sm:p-4">
         {/* Left: Scoreboard */}
-        <div className="w-48 shrink-0">
+        <div className="order-1 lg:order-none w-full lg:w-52 shrink-0">
           <ScoreBoard
             players={state.players}
             dealerIndex={state.dealerIndex}
@@ -132,7 +132,7 @@ export default function GamePage() {
         </div>
 
         {/* Center: Game area */}
-        <div className="flex-1 flex flex-col gap-4">
+        <div className="order-2 lg:order-none flex-1 flex flex-col gap-3 sm:gap-4">
           <TrickArea
             trick={state.currentTrick}
             players={state.players}
@@ -157,7 +157,7 @@ export default function GamePage() {
           )}
 
           {state.phase === 'bidding' && !isHumanTurn && (
-            <div className="text-center text-green-300 animate-pulse py-4">
+            <div className="text-center text-green-300 animate-pulse py-4 text-sm sm:text-base">
               {currentPlayer.name} is thinking...
             </div>
           )}
@@ -165,7 +165,7 @@ export default function GamePage() {
       </div>
 
       {/* Bottom: Human hand */}
-      <div className="bg-green-950 px-4 py-3">
+      <div className="bg-green-950 px-3 sm:px-4 py-3">
           <MultiplayerHand
             player={humanPlayer}
             validCardIds={validCardIds}

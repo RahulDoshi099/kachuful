@@ -27,14 +27,14 @@ const SUIT_COLORS: Record<string, string> = {
 export default function CardComponent({ card, onClick, isValid, isPlayed, small }: Props) {
   const symbol = SUIT_SYMBOLS[card.suit];
   const color = SUIT_COLORS[card.suit];
-  const size = small ? 'w-12 h-16' : 'w-20 h-28';
+  const size = small ? 'w-12 h-16' : 'w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28';
 
   return (
     <button
       onClick={onClick}
       disabled={!isValid && !isPlayed}
       className={`
-        ${size} rounded-lg border-2 bg-white flex flex-col justify-between p-2 font-bold
+        ${size} rounded-lg border-2 bg-white flex flex-col justify-between p-1.5 sm:p-2 font-bold
         transition-all duration-150 select-none relative
         ${isPlayed ? 'border-gray-300 opacity-90 cursor-default' : ''}
         ${isValid ? 'border-yellow-400 hover:-translate-y-2 hover:shadow-lg cursor-pointer' : ''}

@@ -8,8 +8,8 @@ interface Props {
 
 export default function BiddingPanel({ validBids, handSize, onBid }: Props) {
   return (
-    <div className="bg-green-800 rounded-xl p-4 text-center">
-      <p className="text-sm text-green-300 mb-3 font-semibold">
+    <div className="bg-green-800 rounded-xl p-3 sm:p-4 text-center">
+      <p className="text-xs sm:text-sm text-green-300 mb-3 font-semibold">
         How many tricks will you take? ({handSize} cards dealt)
       </p>
       <div className="flex gap-2 flex-wrap justify-center">
@@ -21,7 +21,7 @@ export default function BiddingPanel({ validBids, handSize, onBid }: Props) {
               onClick={() => isValid && onBid(bid)}
               disabled={!isValid}
               className={`
-                w-10 h-10 rounded-lg font-bold text-sm transition-all
+                w-9 h-9 sm:w-10 sm:h-10 rounded-lg font-bold text-sm transition-all
                 ${isValid
                   ? 'bg-yellow-500 hover:bg-yellow-400 text-black cursor-pointer'
                   : 'bg-green-700 text-green-500 cursor-not-allowed opacity-50'

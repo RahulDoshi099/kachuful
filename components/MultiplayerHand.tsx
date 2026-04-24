@@ -69,7 +69,7 @@ export default function MultiplayerHand({ player, validCardIds, onPlayCard, isAc
 
   return (
     <div>
-      <div className="flex items-center justify-center gap-3 mb-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-2 text-center">
         <span className="text-sm font-semibold text-green-300">Your Hand</span>
         {player.bid !== null && (
           <span className="text-xs bg-green-800 px-2 py-0.5 rounded-full">
@@ -96,7 +96,40 @@ export default function MultiplayerHand({ player, validCardIds, onPlayCard, isAc
         )}
       </div>
 
-      <div className="flex gap-2 flex-wrap justify-center">
+      <div className="sm:hidden overflow-x-auto pb-2">
+        <div className="flex gap-2 min-w-max justify-center">
+          {sortedHand.map((card) => {
+            const revealed = isRevealed(card.id);
+            const isValid = isActive && validCardIds.has(card.id);
+
+            return (
+              <div key={card.id} className="relative">
+                {revealed ? (
+                  <CardComponent
+                    card={card}
+                    isValid={isValid}
+                    onClick={() => handleCardClick(card)}
+                  />
+                ) : (
+                  <CardBack
+                    onClick={() => handleCardClick(card)}
+                    highlight={isActive}
+                  />
+                )}
+                {!showAll && revealedIds.has(card.id) && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full" />
+                )}
+              </div>
+            );
+          })}
+
+          {player.hand.length === 0 && (
+            <span className="text-green-600 text-sm italic">No cards</span>
+          )}
+        </div>
+      </div>
+
+      <div className="hidden sm:flex gap-2 flex-wrap justify-center">
         {sortedHand.map((card) => {
           const revealed = isRevealed(card.id);
           const isValid = isActive && validCardIds.has(card.id);
