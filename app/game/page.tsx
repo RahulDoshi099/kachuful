@@ -137,6 +137,8 @@ export default function GamePage() {
             trick={state.currentTrick}
             players={state.players}
             trumpSuit={state.trumpSuit}
+            tricksPlayed={state.completedTricks.length}
+            totalTricks={state.currentHandSize}
           />
 
           {state.phase === 'roundEnd' && (
