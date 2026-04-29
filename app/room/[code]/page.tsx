@@ -245,23 +245,10 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             🔄 Refresh
           </button>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
-          <span className="bg-green-800 px-2.5 sm:px-3 py-1 rounded-full">
-            Hand {gameState.currentHandIndex + 1}/{gameState.handSizes.length} — {gameState.currentHandSize} cards
-          </span>
-          <span className="bg-yellow-700 px-2.5 sm:px-3 py-1 rounded-full capitalize flex items-center gap-1">
-            Trump:{' '}
-            {gameState.trumpSuit === 'spades' && '♠'}
-            {gameState.trumpSuit === 'hearts' && '♥'}
-            {gameState.trumpSuit === 'diamonds' && '♦'}
-            {gameState.trumpSuit === 'clubs' && '♣'}
-            <span className="ml-1">{gameState.trumpSuit}</span>
-          </span>
-        </div>
       </div>
 
-      <div className="flex flex-1 flex-col lg:flex-row gap-3 sm:gap-4 p-3 sm:p-4">
-        <div className="order-2 lg:order-1 flex-1 flex flex-col gap-3 sm:gap-4">
+      <div className="flex flex-1 flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 p-2 sm:p-4">
+        <div className="order-2 lg:order-1 flex-1 flex flex-col gap-2 sm:gap-3 lg:gap-4 min-h-0">
           {showCenterTimer && currentPlayer && (
             <div className="flex items-center justify-center">
               <div className="flex items-center gap-2 sm:gap-3 rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 bg-green-950/80 border border-green-600/60 shadow max-w-full">
@@ -367,9 +354,9 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
       {/* Bidding panel + hand at bottom */}
       {myPlayer && (
-        <div className="bg-green-950 px-3 sm:px-4 pt-3 pb-4 flex flex-col items-center gap-3">
+        <div className="bg-green-950 px-2 sm:px-4 pt-2 sm:pt-3 pb-3 sm:pb-4 flex flex-col items-center gap-2 sm:gap-3">
           {gameState.phase === 'bidding' && isMyTurn && (
-            <div className="w-full max-w-lg">
+            <div className="w-full max-w-2xl">
               <div className="text-center mb-2">
                 <span className="bg-yellow-500 text-black px-4 py-1 rounded-full font-bold text-sm">
                   🎯 YOUR TURN TO BID
@@ -389,6 +376,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
               validCardIds={validCardIds}
               onPlayCard={handlePlayCard}
               isActive={isMyTurn && gameState.phase === 'playing'}
+              trumpSuit={gameState.trumpSuit}
+              handLabel={`Hand ${gameState.currentHandIndex + 1}/${gameState.handSizes.length} — ${gameState.currentHandSize} cards`}
             />
           </div>
         </div>

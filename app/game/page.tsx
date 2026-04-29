@@ -98,20 +98,8 @@ export default function GamePage() {
   return (
     <div className="min-h-screen bg-green-900 text-white flex flex-col">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 px-3 sm:px-4 lg:px-6 py-3 bg-green-950 shadow">
+      <div className="flex items-center justify-between gap-3 px-3 sm:px-4 lg:px-6 py-3 bg-green-950 shadow">
         <h1 className="text-lg sm:text-xl font-bold tracking-wide">Kachuful</h1>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-          <span className="bg-green-800 px-2.5 sm:px-3 py-1 rounded-full">
-            Hand {state.currentHandIndex + 1}/{state.handSizes.length} — {state.currentHandSize} cards
-          </span>
-          <span className="bg-yellow-700 px-2.5 sm:px-3 py-1 rounded-full capitalize flex items-center gap-1">
-            Trump: {state.trumpSuit === 'spades' && '♠'}
-            {state.trumpSuit === 'hearts' && '♥'}
-            {state.trumpSuit === 'diamonds' && '♦'}
-            {state.trumpSuit === 'clubs' && '♣'}
-            <span className="ml-1">{state.trumpSuit}</span>
-          </span>
-        </div>
         <button
           onClick={() => dispatch({ type: 'RESET' })}
           className="text-xs bg-red-700 hover:bg-red-600 px-3 py-1 rounded self-start lg:self-auto"
@@ -120,7 +108,7 @@ export default function GamePage() {
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col lg:flex-row gap-3 sm:gap-4 p-3 sm:p-4">
+      <div className="flex flex-1 flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 p-2 sm:p-4">
         {/* Left: Scoreboard */}
         <div className="order-1 lg:order-none w-full lg:w-52 shrink-0">
           <ScoreBoard
@@ -132,7 +120,7 @@ export default function GamePage() {
         </div>
 
         {/* Center: Game area */}
-        <div className="order-2 lg:order-none flex-1 flex flex-col gap-3 sm:gap-4">
+        <div className="order-2 lg:order-none flex-1 flex flex-col gap-2 sm:gap-3 lg:gap-4 min-h-0">
           <TrickArea
             trick={state.currentTrick}
             players={state.players}
@@ -165,14 +153,16 @@ export default function GamePage() {
       </div>
 
       {/* Bottom: Human hand */}
-      <div className="bg-green-950 px-3 sm:px-4 py-3">
-          <MultiplayerHand
-            player={humanPlayer}
-            validCardIds={validCardIds}
-            onPlayCard={handlePlayCard}
-            isActive={isHumanTurn && state.phase === 'playing'}
-          />
-        </div>
+      <div className="bg-green-950 px-2 sm:px-4 py-2 sm:py-3">
+        <MultiplayerHand
+          player={humanPlayer}
+          validCardIds={validCardIds}
+          onPlayCard={handlePlayCard}
+          isActive={isHumanTurn && state.phase === 'playing'}
+          trumpSuit={state.trumpSuit}
+          handLabel={`Hand ${state.currentHandIndex + 1}/${state.handSizes.length} — ${state.currentHandSize} cards`}
+        />
+      </div>
     </div>
   );
 }

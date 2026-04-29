@@ -51,25 +51,25 @@ export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, tot
     : null;
 
   return (
-    <div className="bg-green-800 rounded-xl p-3 sm:p-4 min-h-40 flex flex-col gap-3 relative overflow-visible">
+    <div className="bg-green-800 rounded-xl p-2 sm:p-4 min-h-32 sm:min-h-40 flex flex-col gap-2 sm:gap-3 relative overflow-visible">
       {/* Header row */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs text-green-400 font-semibold uppercase tracking-wider">
+      <div className="flex flex-wrap items-center justify-between gap-1 sm:gap-2">
+        <div className="text-[11px] sm:text-xs text-green-400 font-semibold uppercase tracking-wider">
           Current Trick {trick.leadSuit ? `— Lead: ${trick.leadSuit}` : ''}
         </div>
-        <div className="flex items-center gap-1.5 bg-green-900 px-3 py-1 rounded-full">
-          <span className="text-xs text-green-400 uppercase tracking-wider">Trick</span>
-          <span className="font-bold text-white text-sm">
+        <div className="flex items-center gap-1 sm:gap-1.5 bg-green-900 px-2 sm:px-3 py-1 rounded-full">
+          <span className="text-[10px] sm:text-xs text-green-400 uppercase tracking-wider">Trick</span>
+          <span className="font-bold text-white text-xs sm:text-sm">
             {tricksPlayed + (trick.cards.length > 0 && !trickComplete ? 1 : 0)}
           </span>
-          <span className="text-green-500 text-xs">/ {totalTricks}</span>
+          <span className="text-green-500 text-[10px] sm:text-xs">/ {totalTricks}</span>
         </div>
       </div>
 
       {/* Cards */}
-      <div className="flex gap-3 sm:gap-6 flex-wrap items-end justify-center flex-1 pb-2">
+      <div className="flex gap-2 sm:gap-4 flex-wrap items-end justify-center flex-1 pb-1">
         {trick.cards.length === 0 && (
-          <span className="text-green-600 italic text-sm self-center">No cards played yet</span>
+          <span className="text-green-600 italic text-xs sm:text-sm self-center">No cards played yet</span>
         )}
 
         {trick.cards.map(({ playerId, card }) => {
@@ -79,11 +79,11 @@ export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, tot
           return (
             <div
               key={card.id}
-              className={`flex flex-col items-center gap-1 transition-all duration-500 ${
-                isWinner ? '-translate-y-3' : ''
+              className={`flex flex-col items-center gap-0.5 transition-all duration-500 ${
+                isWinner ? '-translate-y-2 sm:-translate-y-3' : ''
               }`}
             >
-              <span className={`text-xs font-semibold ${isWinner ? 'text-yellow-300' : 'text-green-300'}`}>
+              <span className={`text-[10px] sm:text-xs font-semibold ${isWinner ? 'text-yellow-300' : 'text-green-300'}`}>
                 {player?.name}
               </span>
 
@@ -115,9 +115,9 @@ export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, tot
 
       {/* Winner banner + countdown */}
       {trickComplete && winnerName && (
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-1">
-          <div className="bg-yellow-400 text-black font-bold px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm shadow-lg text-center">
-            🏆 {winnerName} wins this trick!
+        <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-3 mt-0.5 sm:mt-1">
+          <div className="bg-yellow-400 text-black font-bold px-3 sm:px-5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-sm shadow-lg text-center">
+            🏆 {winnerName} wins!
           </div>
           {revealCountdown !== null && revealCountdown > 0 && (
             <span className="text-green-400 text-xs font-mono">next in {revealCountdown}s</span>
