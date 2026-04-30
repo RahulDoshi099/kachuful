@@ -96,7 +96,7 @@ export default function GamePage() {
   const validCardIds = new Set(validCards.map((c) => c.id));
 
   return (
-    <div className="min-h-screen bg-green-900 text-white flex flex-col">
+    <div className="min-h-screen h-dvh bg-green-900 text-white flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 px-3 sm:px-4 lg:px-6 py-3 bg-green-950 shadow">
         <h1 className="text-lg sm:text-xl font-bold tracking-wide">Kachuful</h1>
@@ -108,7 +108,7 @@ export default function GamePage() {
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 p-2 sm:p-4">
+      <div className="flex flex-1 flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 p-2 sm:p-4 min-h-0 overflow-hidden">
         {/* Left: Scoreboard */}
         <div className="order-1 lg:order-none w-full lg:w-52 shrink-0">
           <ScoreBoard
@@ -120,7 +120,7 @@ export default function GamePage() {
         </div>
 
         {/* Center: Game area */}
-        <div className="order-2 lg:order-none flex-1 flex flex-col gap-2 sm:gap-3 lg:gap-4 min-h-0">
+        <div className="order-2 lg:order-none flex-1 flex flex-col gap-2 sm:gap-3 lg:gap-4 min-h-0 overflow-hidden">
           <TrickArea
             trick={state.currentTrick}
             players={state.players}
@@ -129,31 +129,40 @@ export default function GamePage() {
             totalTricks={state.currentHandSize}
           />
 
-          {state.phase === 'roundEnd' && (
-            <RoundSummary
-              players={state.players}
-              onContinue={() => dispatch({ type: 'NEXT_ROUND' })}
-            />
-          )}
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            {state.phase === 'roundEnd' && (
+              <RoundSummary
+                players={state.players}
+                onContinue={() => dispatch({ type: 'NEXT_ROUND' })}
+              />
+            )}
 
-          {state.phase === 'bidding' && isHumanTurn && (
-            <BiddingPanel
-              validBids={getValidBids(state, HUMAN_ID)}
-              handSize={state.currentHandSize}
-              onBid={handleBid}
-            />
-          )}
+            {state.phase === 'bidding' && isHumanTurn && (
+              <div className="w-full max-w-2xl rounded-3xl border border-yellow-400/30 bg-green-950/95 px-3 sm:px-4 py-4 sm:py-5 shadow-2xl text-center">
+                <div className="mb-3">
+                  <span className="bg-yellow-500 text-black px-4 py-1 rounded-full font-bold text-sm shadow">
+                    🎯 YOUR TURN TO BID
+                  </span>
+                </div>
+                <BiddingPanel
+                  validBids={getValidBids(state, HUMAN_ID)}
+                  handSize={state.currentHandSize}
+                  onBid={handleBid}
+                />
+              </div>
+            )}
 
-          {state.phase === 'bidding' && !isHumanTurn && (
-            <div className="text-center text-green-300 animate-pulse py-4 text-sm sm:text-base">
-              {currentPlayer.name} is thinking...
-            </div>
-          )}
+            {state.phase === 'bidding' && !isHumanTurn && (
+              <div className="text-center text-green-300 animate-pulse py-4 px-4 rounded-2xl bg-green-950/70 border border-green-700/50 shadow-lg max-w-xl w-full text-sm sm:text-base">
+                {currentPlayer.name} is thinking...
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Bottom: Human hand */}
-      <div className="bg-green-950 px-2 sm:px-4 py-2 sm:py-3">
+      <div className="bg-green-950 px-2 sm:px-4 py-2 sm:py-3 shrink-0">
         <MultiplayerHand
           player={humanPlayer}
           validCardIds={validCardIds}

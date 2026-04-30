@@ -143,7 +143,7 @@ function generateCode(): string {
   return code;
 }
 
-export function createRoom(hostId: string, hostName: string, maxPlayers: number, turnTimer: number = 10): Room {
+export function createRoom(hostId: string, hostName: string, maxPlayers: number, turnTimer: number = 30): Room {
   let code = generateCode();
   while (rooms.has(code)) code = generateCode();
   const now = Date.now();

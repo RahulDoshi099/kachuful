@@ -51,7 +51,7 @@ export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, tot
     : null;
 
   return (
-    <div className="bg-green-800 rounded-xl p-2 sm:p-4 min-h-32 sm:min-h-40 flex flex-col gap-2 sm:gap-3 relative overflow-visible">
+    <div className="mx-auto w-full max-w-5xl rounded-xl bg-green-800 p-2 sm:p-4 min-h-32 sm:min-h-40 flex flex-col gap-2 sm:gap-3 relative overflow-visible">
       {/* Header row */}
       <div className="flex flex-wrap items-center justify-between gap-1 sm:gap-2">
         <div className="text-[11px] sm:text-xs text-green-400 font-semibold uppercase tracking-wider">
@@ -60,7 +60,7 @@ export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, tot
         <div className="flex items-center gap-1 sm:gap-1.5 bg-green-900 px-2 sm:px-3 py-1 rounded-full">
           <span className="text-[10px] sm:text-xs text-green-400 uppercase tracking-wider">Trick</span>
           <span className="font-bold text-white text-xs sm:text-sm">
-            {tricksPlayed + (trick.cards.length > 0 && !trickComplete ? 1 : 0)}
+            {tricksPlayed + (trick.cards.length > 0 ? 1 : 0)}
           </span>
           <span className="text-green-500 text-[10px] sm:text-xs">/ {totalTricks}</span>
         </div>

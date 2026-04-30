@@ -18,7 +18,7 @@ export default function LobbyPage() {
   const [tab, setTab] = useState<'create' | 'join'>('create');
   const [playerName, setPlayerName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(4);
-  const [turnTimer, setTurnTimer] = useState(10);
+  const [turnTimer, setTurnTimer] = useState(30);
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
