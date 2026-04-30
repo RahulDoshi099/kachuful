@@ -10,9 +10,11 @@ interface Props {
   trumpSuit: Suit;
   tricksPlayed: number;
   totalTricks: number;
+  currentHandIndex: number;
+  totalHands: number;
 }
 
-export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, totalTricks }: Props) {
+export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, totalTricks, currentHandIndex, totalHands }: Props) {
   const [clockMs, setClockMs] = useState(() => Date.now());
   const [revealStartedAt, setRevealStartedAt] = useState<number | null>(null);
 
@@ -56,6 +58,9 @@ export default function TrickArea({ trick, players, trumpSuit, tricksPlayed, tot
       <div className="flex flex-wrap items-center justify-between gap-1 sm:gap-2">
         <div className="text-[11px] sm:text-xs text-green-400 font-semibold uppercase tracking-wider">
           Current Trick {trick.leadSuit ? `— Lead: ${trick.leadSuit}` : ''}
+        </div>
+        <div className="text-[11px] sm:text-xs text-green-300 font-medium uppercase tracking-wider">
+          Round {currentHandIndex + 1}/{totalHands}
         </div>
         <div className="flex items-center gap-1 sm:gap-1.5 bg-green-900 px-2 sm:px-3 py-1 rounded-full">
           <span className="text-[10px] sm:text-xs text-green-400 uppercase tracking-wider">Trick</span>

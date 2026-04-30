@@ -297,6 +297,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             trumpSuit={gameState.trumpSuit}
             tricksPlayed={tricksPlayed}
             totalTricks={totalTricks}
+            currentHandIndex={gameState.currentHandIndex}
+            totalHands={gameState.handSizes.length}
           />
 
           <div className="flex-1 min-h-0 flex items-center justify-center">
@@ -356,8 +358,8 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
 
       {/* Bidding panel + hand at bottom */}
       {myPlayer && gameState.phase === 'bidding' && isMyTurn && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6">
-          <div className="w-full max-w-2xl rounded-3xl border border-yellow-400/30 bg-green-950/95 px-3 sm:px-4 py-4 sm:py-5 shadow-2xl">
+        <div className="fixed left-0 right-0 bottom-24 z-40 flex items-end justify-center px-4 py-4 pointer-events-none">
+          <div className="w-full max-w-2xl pointer-events-auto rounded-3xl border border-yellow-400/30 bg-green-950/95 px-3 sm:px-4 py-4 sm:py-5 shadow-2xl">
             <div className="text-center mb-3 flex flex-col items-center gap-2">
               <span className="bg-yellow-500 text-black px-4 py-1 rounded-full font-bold text-sm shadow">
                 🎯 YOUR TURN TO BID

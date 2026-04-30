@@ -127,6 +127,8 @@ export default function GamePage() {
             trumpSuit={state.trumpSuit}
             tricksPlayed={state.completedTricks.length}
             totalTricks={state.currentHandSize}
+            currentHandIndex={state.currentHandIndex}
+            totalHands={state.handSizes.length}
           />
 
           <div className="flex-1 min-h-0 flex items-center justify-center">

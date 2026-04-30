@@ -1,6 +1,6 @@
 // Server-side in-memory room store (lives in Node.js process)
 import { GameState } from './types';
-import { advanceTrick, aiBid, aiPlayCard, createInitialState, placeBid, playCard } from './gameEngine';
+import { advanceTrick, advanceRound, aiBid, aiPlayCard, createInitialState, placeBid, playCard } from './gameEngine';
 
 export interface RoomPlayer {
   id: string;
@@ -21,6 +21,7 @@ export interface Room {
   turnStartedAt: number | null;
   turnSecondsLeft: number;
   revealStartedAt: number | null;
+  roundEndStartedAt: number | null;
 }
 
 const INACTIVITY_TIMEOUT_MS = 12000;
@@ -90,8 +91,30 @@ function tickRoom(room: Room): void {
         state = advanceTrick(state);
         room.gameState = state;
         room.revealStartedAt = null;
+        room.roundEndStartedAt = null;
         resetTurnClock(room);
         continue;
+      }
+      room.turnSecondsLeft = 0;
+      break;
+    }
+
+    // Auto-advance roundEnd if host is offline or host is AI and timeout expired
+    if (state.phase === 'roundEnd') {
+      if (room.roundEndStartedAt === null) room.roundEndStartedAt = now;
+      const hostPlayer = state.players.find((p) => p.id === room.hostId);
+      const roomHost = getConnectedRoomPlayer(room, room.hostId);
+      const hostDisconnected = roomHost ? !roomHost.connected : true;
+      const hostIsAI = hostPlayer ? hostPlayer.type === 'ai' : false;
+      const elapsed = now - (room.roundEndStartedAt ?? now);
+      if (elapsed >= (room.turnTimer * 1000)) {
+        if (hostDisconnected || hostIsAI) {
+          state = advanceRound(state);
+          room.gameState = state;
+          room.roundEndStartedAt = null;
+          resetTurnClock(room);
+          continue;
+        }
       }
       room.turnSecondsLeft = 0;
       break;
@@ -159,6 +182,7 @@ export function createRoom(hostId: string, hostName: string, maxPlayers: number,
     turnStartedAt: null,
     turnSecondsLeft: 0,
     revealStartedAt: null,
+    roundEndStartedAt: null,
   };
   rooms.set(code, room);
   return room;
@@ -220,6 +244,7 @@ export function startGame(code: string): Room | null {
     room.players.map((p) => p.id)   // pass real player IDs
   );
   room.revealStartedAt = null;
+  room.roundEndStartedAt = null;
   resetTurnClock(room);
   tickRoom(room);
   return room;
@@ -230,6 +255,7 @@ export function updateGameState(code: string, state: GameState): void {
   if (room) {
     room.gameState = state;
     room.revealStartedAt = state.phase === 'trickReveal' ? room.revealStartedAt ?? Date.now() : null;
+    room.roundEndStartedAt = state.phase === 'roundEnd' ? room.roundEndStartedAt ?? Date.now() : null;
     resetTurnClock(room);
     tickRoom(room);
   }
