@@ -12,6 +12,7 @@ interface Props {
   isActive: boolean;
   trumpSuit: Suit;
   handLabel: string;
+  showWaiting?: boolean;
 }
 
 // Sort cards by suit then rank
@@ -33,7 +34,7 @@ function sortCards(cards: Card[]): Card[] {
   });
 }
 
-export default function MultiplayerHand({ player, validCardIds, onPlayCard, isActive, trumpSuit, handLabel }: Props) {
+export default function MultiplayerHand({ player, validCardIds, onPlayCard, isActive, trumpSuit, handLabel, showWaiting = true }: Props) {
   // Track which individual cards are revealed
   const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
   const [showAll, setShowAll] = useState(true);
@@ -112,7 +113,7 @@ export default function MultiplayerHand({ player, validCardIds, onPlayCard, isAc
             tap a card to peek · tap again to play
           </span>
         )}
-        {!isActive && (
+        {showWaiting && !isActive && (
           <span className="text-xs text-green-500 italic">waiting for your turn...</span>
         )}
       </div>

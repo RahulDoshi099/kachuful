@@ -43,6 +43,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const [gameState, dispatch] = useReducer(reducer, null as unknown as GameState);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [scoreboardOpen, setScoreboardOpen] = useState(false);
   const playerId = typeof window !== 'undefined' ? getPlayerId() : '';
 
   const fetchRoom = useCallback(async () => {
@@ -247,7 +248,32 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         </div>
       </div>
 
+      {/* Scoreboard - collapsible on mobile */}
+      {gameState && (
+        <div className="lg:hidden bg-green-950 px-2 sm:px-4 py-2 sm:py-3 border-b border-green-800">
+          <button
+            onClick={() => setScoreboardOpen(!scoreboardOpen)}
+            className="w-full bg-green-800 hover:bg-green-700 px-3 py-2 rounded-lg font-semibold text-sm flex items-center justify-between transition-colors"
+          >
+            <span className="text-green-300">SCORES</span>
+            <span className="text-xs">{scoreboardOpen ? '▼' : '▶'}</span>
+          </button>
+          {scoreboardOpen && (
+            <div className="mt-2 max-h-64 overflow-y-auto">
+              <ScoreBoard
+                players={gameState.players}
+                dealerIndex={gameState.dealerIndex}
+                currentPlayerIndex={gameState.currentPlayerIndex}
+                phase={gameState.phase}
+                connectedById={Object.fromEntries(room!.players.map((p) => [p.id, p.connected]))}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-1 flex-col lg:flex-row gap-2 sm:gap-3 lg:gap-4 p-2 sm:p-4 min-h-0 overflow-hidden">
+        {/* Main game area */}
         <div className="order-2 lg:order-1 flex-1 flex flex-col gap-2 sm:gap-3 lg:gap-4 min-h-0 overflow-hidden">
           {showCenterTimer && currentPlayer && (
             <div className="flex items-center justify-center">
@@ -291,6 +317,16 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             </div>
           )}
 
+          {gameState.phase === 'roundEnd' && (
+            <div className="w-full bg-green-800 rounded-xl p-3 sm:p-4">
+              <RoundSummary
+                players={gameState.players}
+                onContinue={isHost ? handleNextRound : undefined}
+                isHost={isHost}
+              />
+            </div>
+          )}
+
           <TrickArea
             trick={gameState.currentTrick}
             players={gameState.players}
@@ -301,15 +337,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             totalHands={gameState.handSizes.length}
           />
 
-          <div className="flex-1 min-h-0 flex items-center justify-center">
-            {gameState.phase === 'roundEnd' && (
-              <RoundSummary
-                players={gameState.players}
-                onContinue={isHost ? handleNextRound : undefined}
-                isHost={isHost}
-              />
-            )}
-
+          <div className={`${gameState.phase === 'roundEnd' ? 'hidden' : 'flex-1'} min-h-0 flex items-center justify-center overflow-y-auto`}>
             {gameState.phase === 'bidding' && !isMyTurn && (
               <div className="text-center py-4 px-4 rounded-2xl bg-green-950/70 border border-green-700/50 shadow-lg max-w-xl w-full">
                 <div className="text-green-300 animate-pulse text-base sm:text-lg mb-2">
@@ -344,16 +372,19 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           </div>
         </div>
 
-        {/* Scoreboard on the right */}
-        <div className="order-1 lg:order-2 w-full lg:w-52 shrink-0">
-          <ScoreBoard
-            players={gameState.players}
-            dealerIndex={gameState.dealerIndex}
-            currentPlayerIndex={gameState.currentPlayerIndex}
-            phase={gameState.phase}
-            connectedById={Object.fromEntries(room.players.map((p) => [p.id, p.connected]))}
-          />
+        {/* Scoreboard - hidden on mobile, visible on lg+ */}
+        <div className="hidden lg:flex order-1 lg:order-2 w-full lg:w-52 shrink-0 flex-col">
+          {gameState && (
+            <ScoreBoard
+              players={gameState.players}
+              dealerIndex={gameState.dealerIndex}
+              currentPlayerIndex={gameState.currentPlayerIndex}
+              phase={gameState.phase}
+              connectedById={Object.fromEntries(room!.players.map((p) => [p.id, p.connected]))}
+            />
+          )}
         </div>
+
       </div>
 
       {/* Bidding panel + hand at bottom */}
@@ -387,6 +418,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
               onPlayCard={handlePlayCard}
               isActive={isMyTurn && gameState.phase === 'playing'}
               trumpSuit={gameState.trumpSuit}
+              showWaiting={gameState.phase === 'playing'}
               handLabel={`Hand ${gameState.currentHandIndex + 1}/${gameState.handSizes.length} — ${gameState.currentHandSize} cards`}
             />
           </div>

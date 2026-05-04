@@ -121,6 +121,15 @@ export default function GamePage() {
 
         {/* Center: Game area */}
         <div className="order-2 lg:order-none flex-1 flex flex-col gap-2 sm:gap-3 lg:gap-4 min-h-0 overflow-hidden">
+          {state.phase === 'roundEnd' && (
+            <div className="w-full bg-green-800 rounded-xl p-3 sm:p-4">
+              <RoundSummary
+                players={state.players}
+                onContinue={() => dispatch({ type: 'NEXT_ROUND' })}
+              />
+            </div>
+          )}
+
           <TrickArea
             trick={state.currentTrick}
             players={state.players}
@@ -131,13 +140,7 @@ export default function GamePage() {
             totalHands={state.handSizes.length}
           />
 
-          <div className="flex-1 min-h-0 flex items-center justify-center">
-            {state.phase === 'roundEnd' && (
-              <RoundSummary
-                players={state.players}
-                onContinue={() => dispatch({ type: 'NEXT_ROUND' })}
-              />
-            )}
+          <div className={`${state.phase === 'roundEnd' ? 'hidden' : 'flex-1'} min-h-0 flex items-center justify-center`}>
 
             {state.phase === 'bidding' && isHumanTurn && (
               <div className="w-full max-w-2xl rounded-3xl border border-yellow-400/30 bg-green-950/95 px-3 sm:px-4 py-4 sm:py-5 shadow-2xl text-center">
@@ -171,6 +174,7 @@ export default function GamePage() {
           onPlayCard={handlePlayCard}
           isActive={isHumanTurn && state.phase === 'playing'}
           trumpSuit={state.trumpSuit}
+          showWaiting={state.phase === 'playing'}
           handLabel={`Hand ${state.currentHandIndex + 1}/${state.handSizes.length} — ${state.currentHandSize} cards`}
         />
       </div>
