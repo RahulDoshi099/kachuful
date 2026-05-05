@@ -276,7 +276,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
         {/* Main game area */}
         <div className="order-2 lg:order-1 flex-1 flex flex-col gap-2 sm:gap-3 lg:gap-4 min-h-0 overflow-hidden">
           {showCenterTimer && currentPlayer && (
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center shrink-0">
               <div className="flex items-center gap-2 sm:gap-3 rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 bg-green-950/80 border border-green-600/60 shadow max-w-full">
                 <div className="text-center leading-tight">
                   <p className="text-[11px] uppercase tracking-wider text-green-400">Current Turn</p>
@@ -318,7 +318,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
           )}
 
           {gameState.phase === 'roundEnd' && (
-            <div className="w-full bg-green-800 rounded-xl p-3 sm:p-4">
+            <div className="w-full flex-shrink-0 max-h-[40vh] overflow-hidden">
               <RoundSummary
                 players={gameState.players}
                 onContinue={isHost ? handleNextRound : undefined}
@@ -327,49 +327,53 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             </div>
           )}
 
-          <TrickArea
-            trick={gameState.currentTrick}
-            players={gameState.players}
-            trumpSuit={gameState.trumpSuit}
-            tricksPlayed={tricksPlayed}
-            totalTricks={totalTricks}
-            currentHandIndex={gameState.currentHandIndex}
-            totalHands={gameState.handSizes.length}
-          />
+          {gameState.phase !== 'roundEnd' && (
+            <>
+              <TrickArea
+                trick={gameState.currentTrick}
+                players={gameState.players}
+                trumpSuit={gameState.trumpSuit}
+                tricksPlayed={tricksPlayed}
+                totalTricks={totalTricks}
+                currentHandIndex={gameState.currentHandIndex}
+                totalHands={gameState.handSizes.length}
+              />
 
-          <div className={`${gameState.phase === 'roundEnd' ? 'hidden' : 'flex-1'} min-h-0 flex items-center justify-center overflow-y-auto`}>
-            {gameState.phase === 'bidding' && !isMyTurn && (
-              <div className="text-center py-4 px-4 rounded-2xl bg-green-950/70 border border-green-700/50 shadow-lg max-w-xl w-full">
-                <div className="text-green-300 animate-pulse text-base sm:text-lg mb-2">
-                  {currentPlayer?.name} is bidding...
-                </div>
-                <p className="text-xs text-green-500 mb-3">
-                  (Waiting for {currentPlayer?.name} to place their bid on their device)
-                </p>
-                <div className="text-xs text-green-600">
-                  <p>Bidding Progress: {gameState.biddingIndex + 1} / {gameState.players.length}</p>
-                  <div className="flex justify-center flex-wrap gap-2 mt-2">
-                    {gameState.players.map((p) => (
-                      <div key={p.id} className={`px-2 py-1 rounded text-xs ${p.bid !== null ? 'bg-green-700' : 'bg-green-900'}`}>
-                        {p.name}: {p.bid !== null ? p.bid : '?'}
+              <div className="flex-1 min-h-0 flex items-center justify-center overflow-y-auto">
+                {gameState.phase === 'bidding' && !isMyTurn && (
+                  <div className="text-center py-4 px-4 rounded-2xl bg-green-950/70 border border-green-700/50 shadow-lg max-w-xl w-full">
+                    <div className="text-green-300 animate-pulse text-base sm:text-lg mb-2">
+                      {currentPlayer?.name} is bidding...
+                    </div>
+                    <p className="text-xs text-green-500 mb-3">
+                      (Waiting for {currentPlayer?.name} to place their bid on their device)
+                    </p>
+                    <div className="text-xs text-green-600">
+                      <p>Bidding Progress: {gameState.biddingIndex + 1} / {gameState.players.length}</p>
+                      <div className="flex justify-center flex-wrap gap-2 mt-2">
+                        {gameState.players.map((p) => (
+                          <div key={p.id} className={`px-2 py-1 rounded text-xs ${p.bid !== null ? 'bg-green-700' : 'bg-green-900'}`}>
+                            {p.name}: {p.bid !== null ? p.bid : '?'}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
+                )}
 
-            {gameState.phase === 'playing' && !isMyTurn && (
-              <div className="text-center py-4 px-4 rounded-2xl bg-green-950/70 border border-green-700/50 shadow-lg max-w-xl w-full">
-                <div className="text-green-300 animate-pulse text-base sm:text-lg mb-2">
-                  {currentPlayer?.name}&apos;s turn to play...
-                </div>
-                <p className="text-xs text-green-500">
-                  (Waiting for {currentPlayer?.name} to play a card on their device)
-                </p>
+                {gameState.phase === 'playing' && !isMyTurn && (
+                  <div className="text-center py-4 px-4 rounded-2xl bg-green-950/70 border border-green-700/50 shadow-lg max-w-xl w-full">
+                    <div className="text-green-300 animate-pulse text-base sm:text-lg mb-2">
+                      {currentPlayer?.name}&apos;s turn to play...
+                    </div>
+                    <p className="text-xs text-green-500">
+                      (Waiting for {currentPlayer?.name} to play a card on their device)
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
         {/* Scoreboard - hidden on mobile, visible on lg+ */}
@@ -403,6 +407,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
               validBids={getValidBids(gameState, playerId)}
               handSize={gameState.currentHandSize}
               onBid={handleBid}
+              trumpSuit={gameState.trumpSuit}
             />
           </div>
         </div>

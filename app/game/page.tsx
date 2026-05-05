@@ -153,6 +153,7 @@ export default function GamePage() {
                   validBids={getValidBids(state, HUMAN_ID)}
                   handSize={state.currentHandSize}
                   onBid={handleBid}
+                  trumpSuit={state.trumpSuit}
                 />
               </div>
             )}
