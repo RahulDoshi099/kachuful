@@ -1,6 +1,7 @@
 // Server-side in-memory room store (lives in Node.js process)
 import { GameState } from './types';
 import { advanceTrick, advanceRound, aiBid, aiPlayCard, createInitialState, placeBid, playCard } from './gameEngine';
+import { BANNED_NAME_ERROR, isBannedPlayerName, sanitizePlayerName } from './nameRules';
 
 export interface RoomPlayer {
   id: string;
@@ -210,6 +211,10 @@ export function touchPlayer(code: string, playerId: string): Room | undefined {
 export function joinRoom(code: string, playerId: string, playerName: string): { room: Room | null; error?: string } {
   const room = rooms.get(code.toUpperCase());
   if (!room) return { room: null, error: 'Room not found' };
+
+  const playerNameStr = sanitizePlayerName(playerName);
+  if (!playerNameStr) return { room: null, error: 'Missing fields' };
+  if (isBannedPlayerName(playerNameStr)) return { room: null, error: BANNED_NAME_ERROR };
   
   // Reconnect if already in room
   const existing = room.players.find((p) => p.id === playerId);
@@ -225,13 +230,13 @@ export function joinRoom(code: string, playerId: string, playerName: string): { 
   }
   
   // Check for duplicate name (case-insensitive)
-  const nameLower = playerName.toLowerCase();
-  const nameExists = room.players.some((p) => p.name.toLowerCase() === nameLower);
+  const nameLower = playerNameStr.toLowerCase();
+  const nameExists = room.players.some((p) => p.name.trim().toLowerCase() === nameLower);
   if (nameExists) {
     return { room: null, error: 'Name already taken in this room' };
   }
   
-  room.players.push({ id: playerId, name: playerName, connected: true, lastSeenAt: Date.now() });
+  room.players.push({ id: playerId, name: playerNameStr, connected: true, lastSeenAt: Date.now() });
   return { room };
 }
 

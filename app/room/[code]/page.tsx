@@ -44,6 +44,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
+  const [localPlayerName, setLocalPlayerName] = useState('');
   const playerId = typeof window !== 'undefined' ? getPlayerId() : '';
 
   const fetchRoom = useCallback(async () => {
@@ -71,6 +72,20 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
       clearInterval(interval);
     };
   }, [fetchRoom]);
+
+  // Hydration-safe: read localStorage after mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('kachuful_player_name');
+    if (stored) setLocalPlayerName(stored);
+  }, []);
+
+  // Fallback: if localStorage is missing, infer from current room state
+  useEffect(() => {
+    if (localPlayerName) return;
+    const fromState = gameState?.players?.find((p) => p.id === playerId)?.name;
+    if (fromState) setLocalPlayerName(fromState);
+  }, [gameState, localPlayerName, playerId]);
 
   const pushState = useCallback(async (state: GameState) => {
     await fetch(`/api/room/${code}`, {
@@ -236,7 +251,7 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
   return (
     <div className="min-h-screen h-dvh bg-green-900 text-white flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 px-3 sm:px-4 lg:px-6 py-3 bg-green-950 shadow">
+      <div className="flex items-center justify-between flex-wrap gap-2 px-3 sm:px-4 lg:px-6 py-3 bg-green-950 shadow">
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
           <h1 className="text-lg sm:text-xl font-bold">Kachuful</h1>
           <button onClick={copyCode} className="text-xs bg-green-800 hover:bg-green-700 px-2 py-1 rounded font-mono">
@@ -246,6 +261,15 @@ export default function RoomPage({ params }: { params: Promise<{ code: string }>
             🔄 Refresh
           </button>
         </div>
+
+        {localPlayerName && (
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wider text-green-400">You</span>
+            <span className="bg-green-800/70 px-2 py-1 rounded-lg text-xs sm:text-sm font-semibold max-w-[180px] truncate">
+              {localPlayerName}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Scoreboard - collapsible on mobile */}
